@@ -10,28 +10,36 @@ export interface UserResponses {
   q1: string; // Business/audience challenge
   q2: string; // Owned asset
   q3: string; // Lived moment & desired outcome
-  ownedMediaThought?: string; // Thought collected during processing
+  ownedMediaThought?: string; // Optional API context; not collected in the current UI
 }
 
 export interface AssetFamilyScore {
   family: 'Recognition' | 'Data' | 'Story & Content' | 'Physical';
-  description: string;
-  currentUtilization: number; // 0 - 100
-  opportunityPotential: number; // 0 - 100
+  description: string; // One sentence linking current use to the projected opportunity
+  currentUtilization: number | null; // Client-provided percentage, otherwise unknown
+  opportunityPotential: number | null; // Client-provided percentage, otherwise unknown
+  evidence?: string; // Exact supporting excerpt from the client's answers
+  currentUse?: string;
+  answerRefs?: string[];
   isPrimaryCandidate: boolean;
 }
 
 export interface DimensionRating {
   name: string;
-  score: number; // 1 - 5
+  score: number | null; // Whole-point 1 - 5 assessment, or unknown
   notes: string;
+  evidence?: string;
+  answerRefs?: string[];
 }
 
 export interface AssetMatrixItem {
   name: string;
-  potentialScore: number; // 1 - 5; 3 or above is high
-  readinessScore: number; // 1 - 5; 3 or above is high
+  potentialScore: number | null; // 1 - 5 assessment, or unknown
+  readinessScore: number | null;
   nextStep: string;
+  evidence?: string;
+  answerRefs?: string[];
+  placement?: 'unlock' | 'pilot' | 'monitor' | 'support' | 'unknown';
 }
 
 export interface AuditInsights {
@@ -42,11 +50,16 @@ export interface AuditInsights {
     summary: string;
     coreDifficulty: string;
     targetBehavior: string;
+    audience?: string;
+    opportunityHypothesis?: string;
+    openQuestions?: string[];
+    evidence?: string;
+    answerRefs?: string[];
   };
   livedMoment: {
     touchpoint: string;
     frequency: string;
-    currentPerception: 'Ignored' | 'Transactional' | 'Friction' | 'Under-measured';
+    currentPerception: 'Ignored' | 'Transactional' | 'Friction' | 'Under-measured' | 'Not provided';
     desiredOutcome: string;
     attentionGap: string;
   };
@@ -57,9 +70,11 @@ export interface AuditInsights {
 
   // Panel 3 (Graph 2): Potential vs Readiness Matrix
   prioritization: {
-    potentialScore: number; // 1.0 to 5.0
-    readinessScore: number; // 1.0 to 5.0
-    quadrant: 'Shape a Pilot Now' | 'Name the Unlock' | 'Supporting Role' | 'Park It';
+    potentialScore: number | null;
+    readinessScore: number | null;
+    quadrant: 'Shape a Pilot Now' | 'Name the Unlock' | 'Supporting Role' | 'Park It' | 'Needs more information';
+    evidence?: string;
+    openQuestions?: string[];
     quadrantAction: string;
     potentialBreakdown: DimensionRating[];
     readinessBreakdown: DimensionRating[];
@@ -84,6 +99,6 @@ export interface AuditInsights {
     fullAuditNote: string;
   };
 
-  source: 'gemini' | 'heuristic-fallback' | 'demo';
+  source: 'gemini' | 'demo';
 }
 

@@ -127,7 +127,6 @@ body {
 .matrix-dot { width: 4px; height: 4px; flex-shrink: 0; background: #525252; }
 .matrix-asset:hover, .matrix-asset[aria-pressed="true"] { color: white; }
 .matrix-asset[aria-pressed="true"] .matrix-dot { background: #ef4444; }
-.matrix-asset[aria-pressed="true"] > span:last-child { text-decoration: underline; text-decoration-color: #ef4444; text-underline-offset: 5px; }
 .matrix-empty { padding-top: 14px; font-size: 0.75rem; color: #525252; }
 .matrix-selection { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #262626; padding-top: 20px; margin-top: 8px; }
 
@@ -157,6 +156,7 @@ button:focus-visible, a:focus-visible, input[type="radio"]:focus-visible, summar
   .site-header, .site-footer, .report-actions, .report-details { display: none !important; }
   .audit-report { max-width: none !important; padding: 0 !important; }
   .audit-report * { color: #171717 !important; border-color: #d4d4d4 !important; }
+  .audit-report svg text { fill: #171717 !important; }
   .report-panel { background: white !important; break-inside: avoid; }
   .matrix-potential, .matrix-readiness { background: white !important; }
   .audit-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

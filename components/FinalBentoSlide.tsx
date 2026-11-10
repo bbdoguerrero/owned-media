@@ -1,11 +1,13 @@
 "use client";
 
 import { ArrowRight, FileText, RotateCcw } from "lucide-react";
-import { AuditInsights, UserProfile } from "@/app/types/audit";
-import { AssetFamilyGraph } from "./graphs/AssetFamilyGraph";
-import { PrioritizationMatrixGraph } from "./graphs/PrioritizationMatrixGraph";
+import type { AuditInsights, UserProfile } from "@/app/types/audit";
 import { AssetOpportunityMatrix } from "./graphs/AssetOpportunityMatrix";
-import { createFallbackMatrix, normalizeAssetMatrix } from "@/lib/audit-matrix";
+import { AssetRatingsGraph } from "./graphs/AssetRatingsGraph";
+import { AssessmentRadarGraph } from "./graphs/AssessmentRadarGraph";
+import { LikertGraph } from "./graphs/LikertGraph";
+import { normalizeAssetMatrix } from "@/lib/audit-matrix";
+import { oneSentence, shortLabel } from "@/lib/report-visuals";
 
 interface FinalBentoSlideProps {
   insights: AuditInsights;
@@ -15,10 +17,15 @@ interface FinalBentoSlideProps {
 
 export function FinalBentoSlide({ insights, profile, onRestart }: FinalBentoSlideProps) {
   const isDemo = insights.source === "demo";
-  const matrixAssets = normalizeAssetMatrix(insights.assetMatrix, createFallbackMatrix(insights.pilotCard.oneTouchpoint, insights.prioritization));
+  const assets = normalizeAssetMatrix(insights.assetMatrix, []);
+  const priority = insights.prioritization;
+  const measure = oneSentence(insights.pilotCard.successSignal, "Compare the test with the current experience.", 14).replace(/[.!?]+$/, "");
+  const guardrail = oneSentence(insights.pilotCard.guardrail, "Confirm access and safeguards before launch.", 14).replace(/^(Approve|Confirm|Keep|Check|Verify|Ensure)/, (word) => word.toLowerCase());
+  const pilotCaption = oneSentence(`${measure}; ${guardrail}`, "Agree a comparison and confirm safeguards before testing.", 32);
+
   return (
-    <section className="audit-report mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="report-title">
-      <div className="mb-9 flex flex-col justify-between gap-5 border-b border-neutral-800 pb-7 sm:flex-row sm:items-end">
+    <section className="audit-report mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12" aria-labelledby="report-title">
+      <div className="mb-7 flex flex-col justify-between gap-4 border-b border-neutral-800 pb-6 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow mb-3">{isDemo && "Demo / "}{profile.company} / {profile.industry}</p>
           <h1 id="report-title" className="font-gothic text-2xl leading-tight sm:text-4xl">Owned media audit</h1>
@@ -29,82 +36,54 @@ export function FinalBentoSlide({ insights, profile, onRestart }: FinalBentoSlid
         </div>
       </div>
 
-      <section className="report-panel mb-10" aria-labelledby="opportunity-matrix-title">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="opportunity-matrix-title" className="font-gothic text-lg sm:text-2xl">Your asset opportunities</h2>
-          <p className="text-xs text-neutral-500">{isDemo ? "Illustrative placements" : "Based on your answers"}</p>
-        </div>
-        <AssetOpportunityMatrix assets={matrixAssets} />
-      </section>
-
-      <div className="mb-10 max-w-3xl border-l-2 border-red-500 pl-5">
-        <p className="eyebrow mb-3">Your business focus</p>
-        <h2 className="text-xl font-medium leading-snug text-white sm:text-2xl">{insights.businessTension.headline}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-400">{insights.businessTension.summary}</p>
+      <div className="mb-7 max-w-3xl border-l-2 border-red-500 pl-4">
+        <h2 className="text-lg font-medium leading-snug text-white">{insights.businessTension.headline}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-400">{oneSentence(insights.businessTension.summary, "Use the three answers to identify a useful role for an existing asset.")}</p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-12">
-        <section className="report-panel min-w-0 border border-neutral-800 bg-neutral-950 p-5 sm:p-7 lg:col-span-7" aria-labelledby="asset-chart-title">
-          <p className="eyebrow mb-3">01 / Your assets</p>
-          <h2 id="asset-chart-title" className="font-gothic mb-7 text-xl sm:text-2xl">Where to focus</h2>
-          <AssetFamilyGraph families={insights.assetFamilies} />
-          <p className="mt-5 border-t border-neutral-800 pt-4 text-sm leading-relaxed text-neutral-300">{insights.familyInsight}</p>
+      <section className="report-panel mb-6" aria-labelledby="opportunity-matrix-title">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="opportunity-matrix-title" className="font-gothic text-lg sm:text-2xl">Opportunity map</h2>
+          <span className="text-[11px] text-neutral-500">{isDemo ? "Illustrative ratings" : "Working assessment"}</span>
+        </div>
+        <AssetOpportunityMatrix assets={assets} />
+      </section>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="report-panel min-w-0 border border-neutral-800 bg-neutral-950 p-5 sm:p-7" aria-labelledby="asset-chart-title">
+          <p className="eyebrow mb-3">Your assets / 1–5</p>
+          <h2 id="asset-chart-title" className="font-gothic mb-6 text-xl sm:text-2xl">Where to focus</h2>
+          <AssetRatingsGraph assets={assets} caption={insights.familyInsight} />
         </section>
 
-        <section className="report-panel min-w-0 border border-neutral-800 bg-neutral-950 p-5 sm:p-7 lg:col-span-5" aria-labelledby="priority-chart-title">
-          <p className="eyebrow mb-3">02 / Your opportunity</p>
-          <h2 id="priority-chart-title" className="font-gothic mb-7 text-xl sm:text-2xl">Your first move</h2>
-          <PrioritizationMatrixGraph {...insights.prioritization} />
-        </section>
-
-        <section className="report-panel min-w-0 border border-neutral-800 p-5 sm:p-7 lg:col-span-12" aria-labelledby="moment-title">
-          <p className="eyebrow mb-3">03 / The moment that matters</p>
-          <h2 id="moment-title" className="mb-6 text-lg font-medium text-white">{insights.livedMoment.touchpoint}</h2>
-          <div className="grid items-center gap-5 sm:grid-cols-[1fr_auto_1fr] sm:gap-8">
-            <div className="border-l-2 border-neutral-600 pl-4">
-              <p className="mb-2 text-xs text-neutral-500">Now</p>
-              <p className="text-base text-neutral-300">{insights.livedMoment.currentPerception}</p>
-            </div>
-            <ArrowRight size={22} className="rotate-90 text-red-500 sm:rotate-0" aria-hidden="true" />
-            <div className="border-l-2 border-red-500 pl-4">
-              <p className="mb-2 text-xs text-neutral-500">Next</p>
-              <p className="text-base text-white">{insights.livedMoment.desiredOutcome}</p>
-            </div>
+        <section className="report-panel min-w-0 border border-neutral-800 bg-neutral-950 p-5 sm:p-7" aria-labelledby="radar-chart-title">
+          <div className="flex items-start justify-between gap-4">
+            <div><p className="eyebrow mb-3">Framework profile / 1–5</p><h2 id="radar-chart-title" className="font-gothic text-xl sm:text-2xl">Opportunity profile</h2></div>
           </div>
+          <AssessmentRadarGraph potential={priority.potentialBreakdown} readiness={priority.readinessBreakdown} caption={priority.quadrantAction} />
         </section>
 
-        <section className="report-panel min-w-0 border border-neutral-800 p-5 sm:p-7 lg:col-span-12" aria-labelledby="pilot-title">
-          <p className="eyebrow mb-3">04 / Start small</p>
-          <h2 id="pilot-title" className="font-gothic text-xl sm:text-2xl">Your first test</h2>
-          <div className="mt-7 grid gap-6 sm:grid-cols-3 sm:gap-8">
+        <section className="report-panel min-w-0 border border-neutral-800 p-5 sm:p-7" aria-labelledby="likert-chart-title">
+          <p className="eyebrow mb-3">Readiness / Five-point scale</p>
+          <h2 id="likert-chart-title" className="font-gothic mb-6 text-xl sm:text-2xl">Before you test</h2>
+          <LikertGraph dimensions={priority.readinessBreakdown} />
+        </section>
+
+        <figure className="report-panel min-w-0 border border-neutral-800 p-5 sm:p-7" aria-labelledby="pilot-title">
+          <p className="eyebrow mb-3">Suggested pilot</p>
+          <h2 id="pilot-title" className="font-gothic mb-6 text-xl sm:text-2xl">One small test</h2>
+          <div className="grid gap-5 sm:grid-cols-3">
             {[
               { number: "1", label: "Audience", value: insights.pilotCard.oneAudience },
               { number: "2", label: "Touchpoint", value: insights.pilotCard.oneTouchpoint },
               { number: "3", label: "Change", value: insights.pilotCard.oneChange },
-            ].map(({ number, label, value }) => (
-              <div key={number} className="border-t border-neutral-700 pt-4">
-                <div className="mb-3 flex items-baseline gap-3"><span className="text-2xl text-red-500">{number}</span><h3 className="text-xs text-neutral-400">{label}</h3></div>
-                <p className="text-sm leading-relaxed text-white">{value}</p>
-              </div>
-            ))}
+            ].map(({ number, label, value }) => <div key={number} className="border-t border-neutral-700 pt-3"><span className="text-3xl tabular-nums text-red-500">{number}</span><h3 className="mb-2 mt-3 text-[11px] text-neutral-500">{label}</h3><p className="text-sm leading-relaxed text-neutral-300">{shortLabel(value)}</p></div>)}
           </div>
-          <dl className="mt-7 grid gap-5 border-t border-neutral-800 pt-5 text-sm sm:grid-cols-3 sm:gap-8">
-            {[
-              { label: "Measure", value: insights.pilotCard.successSignal },
-              { label: "Owner", value: insights.pilotCard.accountableOwner },
-              { label: "Keep in mind", value: insights.pilotCard.guardrail },
-            ].map(({ label, value }) => (
-              <div key={label}><dt className="mb-2 text-xs text-neutral-500">{label}</dt><dd className="leading-relaxed text-neutral-300">{value}</dd></div>
-            ))}
-          </dl>
-        </section>
+          <div className="mt-6 flex items-center gap-2 text-xs text-neutral-500"><ArrowRight size={14} className="shrink-0 text-red-500" aria-hidden="true" /><span>Owner / {insights.pilotCard.accountableOwner === "Not assigned" ? "To confirm" : shortLabel(insights.pilotCard.accountableOwner)}</span></div>
+          <figcaption className="mt-6 border-t border-neutral-800 pt-4 text-sm leading-relaxed text-neutral-400">{pilotCaption}</figcaption>
+        </figure>
       </div>
-
-      <div className="mt-8 flex items-start gap-4 border-t border-neutral-800 pt-6">
-        <ArrowRight size={20} className="mt-0.5 shrink-0 text-red-500" aria-hidden="true" />
-        <div><h2 className="mb-2 text-xs text-neutral-500">This week</h2><p className="text-base leading-relaxed text-white">{insights.synthesis.quickWin}</p></div>
-      </div>
-      <p className="mt-7 text-xs text-neutral-500">{isDemo ? "Demo data, not a live Globe audit." : insights.source === "gemini" ? "AI-assisted estimates. Validate with a small test." : "Starting estimates. Validate with a small test."}</p>
+      <p className="mt-6 text-[11px] text-neutral-500">{isDemo ? "Illustrative demo only." : "Initial assessments from your answers; — means unconfirmed."}</p>
     </section>
   );
 }
