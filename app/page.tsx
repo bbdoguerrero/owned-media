@@ -1,69 +1,104 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import Image from "next/image";
+import { UserProfile, UserResponses, AuditInsights } from "@/app/types/audit";
+import { IntroSlide } from "@/components/IntroSlide";
+import { QuestionSlide } from "@/components/QuestionSlide";
+import { ProcessingSlide } from "@/components/ProcessingSlide";
+import { FinalBentoSlide } from "@/components/FinalBentoSlide";
+import { DEMO_INSIGHTS, DEMO_PROFILE } from "@/app/data/demo-audit";
+
+type SlideStep = 0 | 1 | 2 | 3 | 4 | 5;
+
+const QUESTIONS = [
+  {
+    text: "What business or audience challenge needs your attention—and what’s getting in the way?",
+    video: "/videos/queston1.mp4",
+    field: "q1",
+  },
+  {
+    text: "What do you already own or operate that could work harder?",
+    video: "/videos/question2.mp4",
+    field: "q2",
+  },
+  {
+    text: "When does your audience meet that asset—and what should it help them do, feel, or understand?",
+    video: "/videos/question3.mp4",
+    field: "q3",
+  },
+] as const;
+
+export default function OwnedMediaAuditPage() {
+  const [currentStep, setCurrentStep] = useState<SlideStep>(0);
+  const [profile, setProfile] = useState<UserProfile>({ name: "", email: "", company: "", industry: "", position: "" });
+  const [responses, setResponses] = useState<UserResponses>({ q1: "", q2: "", q3: "", ownedMediaThought: "" });
+  const [insights, setInsights] = useState<AuditInsights | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
+
+  const goToStep = (step: SlideStep) => {
+    setCurrentStep(step);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="flex min-h-screen flex-col bg-black text-white">
+      <header className="site-header border-b border-neutral-900 px-5 sm:px-8">
+        <div className="mx-auto flex min-h-18 max-w-6xl items-center justify-between gap-4">
+          <Image
+            src="/menu-logo.png"
+            alt="BBDO Guerrero"
+            width={2560}
+            height={359}
+            sizes="(max-width: 640px) 160px, 224px"
+            loading="eager"
+            className="h-auto w-40 shrink-0 sm:w-56"
+          />
+          {currentStep === 5 && <span className="text-xs text-neutral-500">{isDemo ? "Demo report" : "Your report"}</span>}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </header>
+
+      <div className="flex flex-1 flex-col justify-center">
+        {currentStep === 0 && (
+          <IntroSlide
+            initialProfile={profile}
+            onNext={(value) => { setIsDemo(false); setProfile(value); goToStep(1); }}
+            onDemo={(value) => { setProfile(value); setIsDemo(true); setInsights(DEMO_INSIGHTS); goToStep(5); }}
+          />
+        )}
+
+        {QUESTIONS.map((question, index) => currentStep === index + 1 && (
+          <QuestionSlide
+            key={question.field}
+            questionNumber={(index + 1) as 1 | 2 | 3}
+            questionText={question.text}
+            videoSrc={question.video}
+            value={responses[question.field]}
+            onChange={(value) => setResponses((previous) => ({ ...previous, [question.field]: value }))}
+            onNext={() => goToStep((index + 2) as SlideStep)}
+            onPrev={() => goToStep(index as SlideStep)}
+          />
+        ))}
+
+        {currentStep === 4 && (
+          <ProcessingSlide
+            payload={{ ...profile, ...responses }}
+            onComplete={(result, ownedMediaThought) => {
+              setResponses((previous) => ({ ...previous, ownedMediaThought }));
+              setInsights(result);
+              goToStep(5);
+            }}
+          />
+        )}
+
+        {currentStep === 5 && insights && (
+          <FinalBentoSlide insights={insights} profile={isDemo ? DEMO_PROFILE : profile} onRestart={() => { setIsDemo(false); goToStep(0); }} />
+        )}
+      </div>
+
+      <footer className="site-footer border-t border-neutral-900 px-5 py-5 sm:px-8">
+        <div className="mx-auto max-w-6xl text-xs text-neutral-500">Make more of what you own.</div>
+      </footer>
+    </main>
   );
 }
